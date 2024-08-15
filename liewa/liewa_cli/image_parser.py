@@ -4,6 +4,7 @@ from liewa.liewa_cli.apod import load_apod
 from liewa.liewa_cli.sentinel import load_sentinel
 from liewa.liewa_cli.nasa_sdo import load_sdo
 from liewa.liewa_cli.full_disks import load_geostationary
+from liewa.liewa_cli.geoproj import load_china
 
 
 def load_yaml(filename):
@@ -58,9 +59,11 @@ def parse_image(config_file_dir):
                 resized_img = ImageOps.fit(raw_img, im_size)
 
         # load static image of planet into the bg
-        elif satellite == "external_planet":
-            # raw_img = load_external(value)
-            pass
+        elif satellite == "gk2a-china":
+            raw_img = load_china()
+            scale_ratio = value["size"] / max(raw_img.size)
+            new_width, new_height = (int(dim * scale_ratio) for dim in raw_img.size)
+            resized_img = raw_img.resize((new_width, new_height))
 
         # meteosat, goes, himawari or gk2a
         else:
