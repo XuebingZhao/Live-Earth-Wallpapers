@@ -1,13 +1,14 @@
 import datetime
 import json
 import sys
+import os
 import urllib.request
 from multiprocessing.pool import ThreadPool as Pool
 import time
 
 from PIL import Image
 
-from liewa.liewa_cli.utils import download
+from liewa.liewa_cli.utils import download, get_project_path
 
 
 sizes = {
@@ -63,15 +64,26 @@ def build_url(args,satellite,scale):
     return base_url
 
 
-def load_geostationary(args,satellite):
+def load_geostationary(args,satellite,region=None):
     scale = calc_scale(args,satellite)
     base_url = build_url(args,satellite,scale)
     row, col = calc_tile_coordinates(scale)
 
+    tilesize = sizes[satellite]
+    fullsize = tilesize * (2 ** scale)
+
+    if region is None:
+        region = [0, 0, fullsize, fullsize]
+    load_region = [x * fullsize / args["size"] for x in region]
+
     row_col_pairs = []
 
     for r in row:
+        if ((r+1) * tilesize <= load_region[1]) or (r * tilesize >= load_region[3]):
+            continue
         for c in col:
+            if ((c+1) * tilesize <= load_region[0]) or (c * tilesize >= load_region[2]):
+                continue
             row_col_pairs.append([r, c])
 
     img_map = {}
@@ -94,7 +106,7 @@ def load_geostationary(args,satellite):
         print("Stiching images...")
 
     # stich the images together based on the position in the grid.
-    bg = Image.new("RGB", (sizes[satellite] * (max(col) + 1), sizes[satellite] * (max(row) + 1)))
+    bg = Image.new("RGB", (tilesize * (max(col) + 1), tilesize * (max(row) + 1)))
     for r, c in row_col_pairs:
         img = img_map[str(r) + ":" + str(c)]
         bg.paste(img, (img.width * (c), (r) * img.height))
@@ -103,3 +115,11 @@ def load_geostationary(args,satellite):
     print("Downloads took: ", end - start)
 
     return bg
+
+
+if __name__ == "__main__":
+    for satellite in sizes.keys():
+        size = sizes[satellite] * 8
+        args = {"size": size, "color": "geocolor"}
+        img = load_geostationary(args,satellite)
+        img.save(f"{satellite}.png")
