@@ -64,7 +64,7 @@ def build_url(args,satellite,scale):
     return base_url
 
 
-def load_geostationary(args,satellite,region=None):
+def load_geostationary(args,satellite,region=None,overlay_border=True):
     scale = calc_scale(args,satellite)
     base_url = build_url(args,satellite,scale)
     row, col = calc_tile_coordinates(scale)
@@ -111,6 +111,12 @@ def load_geostationary(args,satellite,region=None):
         img = img_map[str(r) + ":" + str(c)]
         bg.paste(img, (img.width * (c), (r) * img.height))
 
+    if overlay_border:
+        overlay_path = os.path.join(get_project_path(), "recources", f"border_{satellite}_{scale:02d}.png")
+        if os.path.exists(overlay_path):
+            overlay = Image.open(overlay_path).convert('RGBA')
+            bg.paste(overlay, (0, 0), overlay)
+
     end = time.time()
     print("Downloads took: ", end - start)
 
@@ -121,5 +127,5 @@ if __name__ == "__main__":
     for satellite in sizes.keys():
         size = sizes[satellite] * 8
         args = {"size": size, "color": "geocolor"}
-        img = load_geostationary(args,satellite)
+        img = load_geostationary(args,satellite,overlay_border=False)
         img.save(f"{satellite}.png")
