@@ -1,6 +1,7 @@
 import datetime
 import json
 import sys
+import os
 import urllib.request
 from multiprocessing.pool import ThreadPool as Pool
 import time
