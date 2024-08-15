@@ -53,6 +53,18 @@ def main():
         file_name = get_current_time() + ".png"
         save_image(img, args.output, file_name)
 
+    backup_folder_path = os.path.join(get_project_path(), "recources", "backup")
+    if not os.path.exists(backup_folder_path):
+        os.makedirs(backup_folder_path)
+    backup_file_name = os.path.join(backup_folder_path, f"{get_current_time()}.jpg")
+    save_image(img, backup_file_name, None)
+    max_backups = 500
+    files = [f for f in os.listdir(backup_folder_path) ]
+    if len(files) > max_backups:
+        files.sort()
+        for file in files[500:]:
+            os.remove(os.path.join(backup_folder_path, file))
+
 def execute():
     main()
 # if __name__ == '__main__':
