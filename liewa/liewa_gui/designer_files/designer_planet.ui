@@ -344,6 +344,11 @@
          <string>HMIIC</string>
         </property>
        </item>
+       <item>
+        <property name="text">
+         <string>HMIIF</string>
+        </property>
+       </item>
       </widget>
      </item>
     </layout>

@@ -13,7 +13,7 @@ def calc_scale(args):
 
 def load_sdo(args):
     name = args["bandwidth"]
-    supported_args = ["0171", "0171pfss", "0304", "0304pfss", "HMIIC"]
+    supported_args = ["0171", "0171pfss", "0304", "0304pfss", "HMIIC", "HMIIF"]
 
     if name == None:
         name = "0304"  # default color mode

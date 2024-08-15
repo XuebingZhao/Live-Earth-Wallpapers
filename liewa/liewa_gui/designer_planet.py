@@ -214,6 +214,7 @@ class Ui_Dialog(object):
         self.bandwidth_input.setItemText(2, _translate("Dialog", "0304"))
         self.bandwidth_input.setItemText(3, _translate("Dialog", "0304pfss"))
         self.bandwidth_input.setItemText(4, _translate("Dialog", "HMIIC"))
+        self.bandwidth_input.setItemText(5, _translate("Dialog", "HMIIF"))
         self.fit_label.setText(_translate("Dialog", "fit:"))
         self.fit_input.setItemText(0, _translate("Dialog", "fill"))
         self.fit_input.setItemText(1, _translate("Dialog", "contain"))
