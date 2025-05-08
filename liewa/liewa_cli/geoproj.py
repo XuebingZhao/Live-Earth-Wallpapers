@@ -107,7 +107,7 @@ def reprojection(src_image, src_trans, src_crs, dst_trans, dst_crs):
 
 def load_china(satellite):
     target_full_disk_size = 5500
-    _, _, _, _, region = define_projection(target_full_disk_size, satellite)
+
     if satellite == "himawari":
         region = [[1, 2], [1, 1], [0, 3], [2, 1], [2, 2], [0, 2], [1, 0], [0, 1], [1, 3], [2, 0],
                   [2, 3], [1, 4], [0, 4], [2, 4], [3, 3], [1, 5], [3, 0],
@@ -118,11 +118,14 @@ def load_china(satellite):
                   [2, 0], [2, 5], [0, 5], [1, 0], [3, 4],
                   [3, 5], [3, 0],
                   ]
+    else:
+        _, _, _, _, region = define_projection(target_full_disk_size, satellite)
+
     print("Loading China region in pixels:", region)
-    img = load_geostationary({"size": target_full_disk_size, "color": 'geocolor'},
-                             satellite=satellite,
-                             region=region,
-                             overlay_border=False)
+    args = {"size": target_full_disk_size, "color": 'geocolor'}
+    img = load_geostationary(satellite, region=region,
+                             overlay_border=False,
+                             **args)
     src_trans, src_crs, dst_trans, dst_crs, _ = define_projection(img.size[0], satellite)
     img = reprojection(img, src_trans, src_crs, dst_trans, dst_crs)
     return img
@@ -130,6 +133,6 @@ def load_china(satellite):
 
 if __name__ == '__main__':
     # Example usage
-    satellite = 'gk2a'
-    img = load_china(satellite)
-    img.save(f'china_{satellite}.png')
+    sat = 'gk2a'
+    image = load_china(sat)
+    image.save(f'china_{sat}.png')

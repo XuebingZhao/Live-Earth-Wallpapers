@@ -22,8 +22,9 @@ sizes = {
     # "meteosat-11":464,
 }
 
-def get_time_code(sat, name):
-    url = f"https://rammb-slider.cira.colostate.edu/data/json/{sat}/full_disk/{name}/latest_times.json"
+
+def get_time_code(satellite, name):
+    url = f"https://rammb-slider.cira.colostate.edu/data/json/{satellite}/full_disk/{name}/latest_times.json"
     f = urllib.request.urlopen(url)
     data = json.load(f)
     latest = data["timestamps_int"][0]
@@ -32,16 +33,17 @@ def get_time_code(sat, name):
     return latest, date
 
 
-def calc_tile_coordinates(zoomLevel):
+def calc_tile_coordinates(zoom_level):
     # zoomlevel 0-3 or 0-4 (depending on the satellite)
-    t_n = 2**zoomLevel
+    t_n = 2**zoom_level
     row = range(0, t_n)
     col = range(0, t_n)
     return list(row), list(col)
 
-def calc_scale(args,satellite):
+
+def calc_scale(satellite, **kwargs):
     size = sizes[satellite]
-    minimum_side = args["size"]
+    minimum_side = kwargs.get("size", 1024)
     scale = int(minimum_side / size / 1.2)  # up scale < 120%
 
     scale = max(min(scale.bit_length(), 4), 0)   # log_2 scale between 0-4
@@ -50,38 +52,42 @@ def calc_scale(args,satellite):
 
     return scale
 
-def build_url(args,satellite,scale):
+
+def build_url(satellite, scale, **kwargs):
     if scale > 4:
         sys.exit("Does not support Zoom Levels greater than 4.")
 
-    name = args["color"]
-    if name is None:
-        name = "natural_color"  # default color mode
-
+    name = kwargs.get("color", "natural_color")
     supported_args = ["geocolor", "natural_color"]
     if name not in supported_args:
         raise ValueError(
             "Wrong parameter for colorMode: Meteorsat and Goes only support 'natural_color' or 'geocolor' as colorMode!"
         )
 
-    time_code, date = get_time_code(satellite, name)
-    base_url = f"https://rammb-slider.cira.colostate.edu/data/imagery/{date}/{satellite}---full_disk/{name}/{time_code}/0{scale}"
+    time_code = kwargs.get("time_code", None)
+    if time_code is None:
+        time_code, date = get_time_code(satellite, name)
+    else:
+        time_code = str(time_code)
+        date = f"{time_code[0:4]}/{time_code[4:6]}/{time_code[6:8]}"
+    base_url = f"https://ik.imagekit.io/stevenzc/tr:q-95,f-jpg/https://rammb-slider.cira.colostate.edu/data/imagery/{date}/{satellite}---full_disk/{name}/{time_code}/0{scale}"
     return base_url
 
 
-def load_geostationary(args,satellite,region=None,overlay_border=True):
-    scale = calc_scale(args,satellite)
-    base_url = build_url(args,satellite,scale)
+def load_geostationary(satellite, region=None, overlay_border=True, **kwargs):
+    scale = calc_scale(satellite, **kwargs)
+    base_url = build_url(satellite, scale, **kwargs)
     row, col = calc_tile_coordinates(scale)
 
     tilesize = sizes[satellite]
     fullsize = tilesize * (2 ** scale)
+    tgt_size = kwargs.get("size", 1024)
 
     if region is None:
         region = [0, 0, fullsize, fullsize]
 
     if len(region) == 4 and all(isinstance(x, (int, float)) for x in region):
-        load_region = [x * fullsize / args["size"] for x in region]
+        load_region = [x * fullsize / tgt_size for x in region]
 
         row_col_pairs = []
 
@@ -136,8 +142,8 @@ def load_geostationary(args,satellite,region=None,overlay_border=True):
 
 
 if __name__ == "__main__":
-    for satellite in sizes.keys():
-        size = sizes[satellite] * 2
-        args = {"size": size, "color": "geocolor"}
-        img = load_geostationary(args,satellite,overlay_border=False)
-        img.save(f"{satellite}.png")
+    for sat in sizes.keys():
+        img_size = sizes[sat] * 2
+        args = {"size": img_size, "color": "geocolor"}
+        image = load_geostationary(sat, overlay_border=False, **args)
+        image.save(f"{sat}.png")

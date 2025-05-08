@@ -28,7 +28,7 @@ def calc_load_region(satellite_size, canvas_size, satellite_center):
     return load_region
 
 
-def parse_image(config_file_dir):
+def parse_image(config_file_dir, time_code=None):
     config = load_yaml(config_file_dir)
     image_settings = config["settings"]
 
@@ -74,7 +74,8 @@ def parse_image(config_file_dir):
         else:
             load_region = calc_load_region((value["size"], value["size"]), bg_size, (value["x"], value["y"]))
 
-            raw_img = load_geostationary(value, satellite, load_region)
+            args = {**value, "time_code": time_code}
+            raw_img = load_geostationary(satellite, load_region, **args)
             scale_ratio = value["size"] / max(raw_img.size)
             new_width, new_height = (int(dim * scale_ratio) for dim in raw_img.size)
             resized_img = raw_img.resize((new_width, new_height))
