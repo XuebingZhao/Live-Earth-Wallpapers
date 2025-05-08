@@ -79,17 +79,24 @@ def load_geostationary(args,satellite,region=None,overlay_border=True):
 
     if region is None:
         region = [0, 0, fullsize, fullsize]
-    load_region = [x * fullsize / args["size"] for x in region]
 
-    row_col_pairs = []
+    if len(region) == 4 and all(isinstance(x, (int, float)) for x in region):
+        load_region = [x * fullsize / args["size"] for x in region]
 
-    for r in row:
-        if ((r+1) * tilesize <= load_region[1]) or (r * tilesize >= load_region[3]):
-            continue
-        for c in col:
-            if ((c+1) * tilesize <= load_region[0]) or (c * tilesize >= load_region[2]):
+        row_col_pairs = []
+
+        for r in row:
+            if ((r+1) * tilesize <= load_region[1]) or (r * tilesize >= load_region[3]):
                 continue
-            row_col_pairs.append([r, c])
+            for c in col:
+                if ((c+1) * tilesize <= load_region[0]) or (c * tilesize >= load_region[2]):
+                    continue
+                row_col_pairs.append([r, c])
+
+    elif all(isinstance(x, list) and all(isinstance(y, int) for y in x) and len(x) == 2 for x in region):
+        row_col_pairs = region
+    else:
+        raise ValueError("Invalid region parameter.")
 
     img_map = {}
     print(f"Downloading {len(row_col_pairs)} images...")
