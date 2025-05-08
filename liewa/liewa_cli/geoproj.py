@@ -32,22 +32,17 @@ scale_factor = {
 # "plot_projection" shound be the same as "dst_crs"
 dst_crs_string = '+proj=aea +lat_1=25.0 +lat_2=47.0 +lon_0=105.0 +ellps=WGS84'  # Albers Equal Area
 plot_projection = ccrs.AlbersEqualArea(central_longitude=105.0, standard_parallels=(25.0, 47.0))
-wgs84_bounds = (76, 16, 150, 49.8)
+wgs84_bounds = (75, 16.73, 145, 49.6)
 dst_width = 3840
 dst_height = 2160
 
 
-def reprojection(image, satellite):
-    array = np.array(image)
-
-    height, width, bands = array.shape = array.shape
-
+def define_projection(image_size, satellite):
     # Specify the source projection and bounds
-    sizex = 10868000 / width / scale_factor[
-        satellite]  # Calculate the size of the image in meters, 1.002 is a correction factor
+    sizex = 10868000 / image_size / scale_factor[satellite]  # Calculate the size of the image in meters, scale_factor is a correction factor
     sizey = sizex
-    src_trans = from_origin(-width / 2 * sizex, height / 2 * sizex, sizex,
-                            sizey)  # The source transform from upper-left corner
+    src_trans = from_origin(-image_size / 2 * sizex, image_size / 2 * sizey,
+                            sizex, sizey)  # The source transform from upper-left corner
     src_crs_string = f'+proj=geos +h=35785831.0 +lon_0={long_0[satellite]} +ellps=WGS84'  # Geostationary Projection at 128.2E
     src_crs = CRS.from_string(src_crs_string)
 
@@ -58,6 +53,17 @@ def reprojection(image, satellite):
     # Set the destination width and height
     dst_trans = from_bounds(*dst_bounds, dst_width, dst_height)
 
+    # Calculate for load region
+    # src_bounds = transform_bounds(wgs84_crs, src_crs, *wgs84_bounds)
+    src_bounds = transform_bounds(dst_crs, src_crs, *dst_bounds)
+    src_px = np.round(np.array(src_bounds) / sizex * [1, -1, 1, -1] + image_size / 2).astype(int)
+    src_px[1], src_px[3] = src_px[3], src_px[1]  # Swap the y-coordinates to match the image orientation
+    return src_trans, src_crs, dst_trans, dst_crs, src_px.tolist()
+
+
+def reprojection(src_image, src_trans, src_crs, dst_trans, dst_crs):
+    array = np.array(src_image)
+    _, _, bands = array.shape
     # Reproject the image
     dst_data = np.zeros((dst_height, dst_width, bands), dtype=array.dtype)
     for i in range(bands):
@@ -70,7 +76,7 @@ def reprojection(image, satellite):
             dst_transform=dst_trans,
             dst_crs=dst_crs,
             resampling=Resampling.cubic,
-            num_threads=4,
+            num_threads=8,
         )
 
     # Plot the image using Cartopy
@@ -99,20 +105,31 @@ def reprojection(image, satellite):
     return img
 
 
-def load_china():
-    img = load_geostationary({"size": 5504, "color": 'geocolor'},
-                             'gk2a', region=[0, 0, 4200, 2700],
+def load_china(satellite):
+    target_full_disk_size = 5500
+    _, _, _, _, region = define_projection(target_full_disk_size, satellite)
+    if satellite == "himawari":
+        region = [[1, 2], [1, 1], [0, 3], [2, 1], [2, 2], [0, 2], [1, 0], [0, 1], [1, 3], [2, 0],
+                  [2, 3], [1, 4], [0, 4], [2, 4], [3, 3], [1, 5], [3, 0],
+                  [0, 5], [3, 4],
+                  ]
+    elif satellite == "gk2a":
+        region = [[1, 3], [1, 2], [1, 1], [0, 3], [2, 2], [0, 4], [2, 3], [0, 2], [0, 1], [1, 4], [2, 1], [2, 4], [1, 5],
+                  [2, 0], [2, 5], [0, 5], [1, 0], [3, 4],
+                  [3, 5], [3, 0],
+                  ]
+    print("Loading China region in pixels:", region)
+    img = load_geostationary({"size": target_full_disk_size, "color": 'geocolor'},
+                             satellite=satellite,
+                             region=region,
                              overlay_border=False)
-    img = reprojection(img, 'gk2a')
+    src_trans, src_crs, dst_trans, dst_crs, _ = define_projection(img.size[0], satellite)
+    img = reprojection(img, src_trans, src_crs, dst_trans, dst_crs)
     return img
 
 
 if __name__ == '__main__':
     # Example usage
-    # satellite = 'meteosat-9'
-    # img = Image.open(f'{satellite}.png')
-    # img = reprojection(img, satellite)
-    # img.save(f'china_{satellite}.png')
-
-    img = load_china()
-    img.save('china_gk2a.png')
+    satellite = 'gk2a'
+    img = load_china(satellite)
+    img.save(f'china_{satellite}.png')

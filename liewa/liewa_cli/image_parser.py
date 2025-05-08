@@ -60,7 +60,12 @@ def parse_image(config_file_dir):
 
         # load static image of planet into the bg
         elif satellite == "gk2a-china":
-            raw_img = load_china()
+            raw_img = load_china("gk2a")
+            scale_ratio = value["size"] / max(raw_img.size)
+            new_width, new_height = (int(dim * scale_ratio) for dim in raw_img.size)
+            resized_img = raw_img.resize((new_width, new_height))
+        elif satellite == "himawari-china":
+            raw_img = load_china("himawari")
             scale_ratio = value["size"] / max(raw_img.size)
             new_width, new_height = (int(dim * scale_ratio) for dim in raw_img.size)
             resized_img = raw_img.resize((new_width, new_height))
