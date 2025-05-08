@@ -57,12 +57,12 @@ def main():
     if not os.path.exists(backup_folder_path):
         os.makedirs(backup_folder_path)
     backup_file_name = os.path.join(backup_folder_path, f"{get_current_time()}.jpg")
-    save_image(img, backup_file_name, None)
-    max_backups = 500
-    files = [f for f in os.listdir(backup_folder_path) ]
+    img.save(backup_file_name, 'JPEG', quality=95)
+    max_backups = 70*24*2
+    files = [f for f in os.listdir(backup_folder_path) if os.path.isfile(os.path.join(backup_folder_path, f))]
     if len(files) > max_backups:
         files.sort()
-        for file in files[500:]:
+        for file in files[0:-max_backups]:
             os.remove(os.path.join(backup_folder_path, file))
 
 def execute():

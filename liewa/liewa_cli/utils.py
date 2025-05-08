@@ -9,12 +9,13 @@ from PIL import Image
 
 # downloads a image from a url and return a pil Image
 def download(url):
-    for i in range(3):
+    maxtry = 3
+    for i in range(maxtry):
         try:
             with requests.get(url) as response:
                 return Image.open(BytesIO(response.content))
         except Exception as e:
-            print(f"{i}/3 Could not download Image '{url}'...")
+            print(f"{i}/{maxtry} Could not download Image '{url}'...")
             time.sleep(1)
 
 def get_project_path():
@@ -27,4 +28,4 @@ def save_image(img, filename, file):
         img.save(os.path.join(filename,file))
 
 def get_current_time():
-    return datetime.datetime.today().strftime('%Y-%m-%d_%H-%M')
+    return datetime.datetime.today().strftime('%Y%m%d_%H%M%S')
