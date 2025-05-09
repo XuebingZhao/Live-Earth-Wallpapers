@@ -36,19 +36,19 @@ def main(time_code=None):
 
     if args.config == "config1":
         args.config = os.path.join(get_project_path(), "recources", "config1.yml")
-        img = parse_image(args.config, time_code)
+        img, utc = parse_image(args.config, time_code)
     elif args.config == "config2":
         args.config = os.path.join(get_project_path(), "recources", "config2.yml")
-        img = parse_image(args.config, time_code)
+        img, utc = parse_image(args.config, time_code)
     elif args.config == "config3":
         args.config = os.path.join(get_project_path(), "recources", "config3.yml")
-        img = parse_image(args.config, time_code)
+        img, utc = parse_image(args.config, time_code)
     elif args.config == "config4":
         args.config = os.path.join(get_project_path(), "recources", "config4.yml")
-        img = parse_image(args.config, time_code)
+        img, utc = parse_image(args.config, time_code)
     else:
         args.config = os.path.join(get_project_path(), "recources", "gui_config.yml")
-        img = parse_image(args.config, time_code)
+        img, utc = parse_image(args.config, time_code)
 
     if args.output is not None:
         save_image(img, args.output, None)
@@ -58,7 +58,7 @@ def main(time_code=None):
         save_image(img, file_name, None)
         set_background(file_name)
 
-    manage_backups(img)
+    manage_backups(img, utc_time=utc)
 
 
 def execute():
@@ -66,4 +66,4 @@ def execute():
 
 
 if __name__ == '__main__':
-    main("20241021131020")
+    main()

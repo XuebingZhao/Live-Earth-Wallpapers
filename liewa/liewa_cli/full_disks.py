@@ -27,8 +27,8 @@ def get_time_code(satellite, name):
     url = f"https://rammb-slider.cira.colostate.edu/data/json/{satellite}/full_disk/{name}/latest_times.json"
     f = urllib.request.urlopen(url)
     data = json.load(f)
-    latest = data["timestamps_int"][0]
-    date = datetime.datetime.strptime(str(latest), "%Y%m%d%H%M%S").strftime("%Y/%m/%d")
+    latest = str(data["timestamps_int"][0])
+    date = datetime.datetime.strptime(latest, "%Y%m%d%H%M%S").strftime("%Y/%m/%d")
 
     return latest, date
 
@@ -72,14 +72,15 @@ def build_url(satellite, scale, **kwargs):
         time_code = str(time_code)
         date = f"{time_code[0:4]}/{time_code[4:6]}/{time_code[6:8]}"
     base_url = f"https://rammb-slider.cira.colostate.edu/data/imagery/{date}/{satellite}---full_disk/{name}/{time_code}/0{scale}"
-    return base_url
+    utc_time = datetime.datetime.strptime(time_code, "%Y%m%d%H%M%S").replace(tzinfo=datetime.timezone.utc)
+    return base_url, utc_time
 
 
 def load_geostationary(satellite, region=None, overlay_border=False, **kwargs):
     # load region_ can be [top, left, bottom, right] in pixels
     # or a list [[row1,col1], [row2,col2]] in indexes
     scale = calc_scale(satellite, **kwargs)
-    base_url = build_url(satellite, scale, **kwargs)
+    base_url, utc_time = build_url(satellite, scale, **kwargs)
     row, col = calc_tile_coordinates(scale)
 
     tilesize = sizes[satellite]
@@ -138,12 +139,12 @@ def load_geostationary(satellite, region=None, overlay_border=False, **kwargs):
             overlay = Image.open(overlay_path).convert('RGBA')
             bg.paste(overlay, (0, 0), overlay)
 
-    return bg
+    return bg, utc_time
 
 
 if __name__ == "__main__":
     for sat in sizes.keys():
         img_size = sizes[sat] * 2
         args = {"size": img_size, "color": "geocolor"}
-        image = load_geostationary(sat, overlay_border=True, **args)
+        image, _ = load_geostationary(sat, overlay_border=True, **args)
         image.save(f"{sat}-inspect.png")

@@ -30,16 +30,22 @@ def save_image(img, filename, file):
         img.save(os.path.join(filename, file))
 
 
-def get_current_time():
-    return datetime.datetime.today().strftime('%Y%m%d_%H%M%S')
+def get_time_str(in_time=None):
+    if in_time is None:
+        return datetime.datetime.today().strftime('%Y%m%d_%H%M%S')
+    else:
+        # convert to local timezone
+        local_timezone = datetime.datetime.now().astimezone().tzinfo
+        in_time = in_time.astimezone(local_timezone)
+        return in_time.strftime('%Y%m%d_%H%M%S')
 
 
-def manage_backups(img):
+def manage_backups(img, utc_time=None):
     backup_folder_path = os.path.join(get_project_path(), "recources", "backup")
     if not os.path.exists(backup_folder_path):
         os.makedirs(backup_folder_path)
 
-    backup_file_name = os.path.join(backup_folder_path, f"{get_current_time()}.jpg")
+    backup_file_name = os.path.join(backup_folder_path, f"{get_time_str(utc_time)}.jpg")
     img.save(backup_file_name, 'JPEG', quality=95)
 
     max_backups = 70 * 24 * 2  # 70 days of backups

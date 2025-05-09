@@ -39,11 +39,11 @@ dst_height = 2160
 
 def define_projection(image_size, satellite):
     # Specify the source projection and bounds
-    sizex = 10868000 / image_size / scale_factor[satellite]  # Calculate the size of the image in meters, scale_factor is a correction factor
+    sizex = 10868000 / image_size / scale_factor[satellite]  # Size of the image in meters
     sizey = sizex
     src_trans = from_origin(-image_size / 2 * sizex, image_size / 2 * sizey,
                             sizex, sizey)  # The source transform from upper-left corner
-    src_crs_string = f'+proj=geos +h=35785831.0 +lon_0={long_0[satellite]} +ellps=WGS84'  # Geostationary Projection at 128.2E
+    src_crs_string = f'+proj=geos +h=35785831.0 +lon_0={long_0[satellite]} +ellps=WGS84'
     src_crs = CRS.from_string(src_crs_string)
 
     # Specify the destination projection and bounds
@@ -105,34 +105,32 @@ def reprojection(src_image, src_trans, src_crs, dst_trans, dst_crs):
     return img
 
 
-def load_china(satellite):
+def load_china(satellite, time_code=None):
     target_full_disk_size = 5500
 
     if satellite == "himawari":
-        region = [[1, 2], [1, 1], [0, 3], [2, 1], [2, 2], [0, 2], [1, 0], [0, 1], [1, 3], [2, 0],
+        rgn = [[1, 2], [1, 1], [0, 3], [2, 1], [2, 2], [0, 2], [1, 0], [0, 1], [1, 3], [2, 0],
                   [2, 3], [1, 4], [0, 4], [2, 4], [3, 3], [1, 5], [3, 0],
                   [0, 5], [3, 4],
                   ]
     elif satellite == "gk2a":
-        region = [[1, 3], [1, 2], [1, 1], [0, 3], [2, 2], [0, 4], [2, 3], [0, 2], [0, 1], [1, 4], [2, 1], [2, 4], [1, 5],
+        rgn = [[1, 3], [1, 2], [1, 1], [0, 3], [2, 2], [0, 4], [2, 3], [0, 2], [0, 1], [1, 4], [2, 1], [2, 4], [1, 5],
                   [2, 0], [2, 5], [0, 5], [1, 0], [3, 4],
                   [3, 5], [3, 0],
                   ]
     else:
-        _, _, _, _, region = define_projection(target_full_disk_size, satellite)
+        _, _, _, _, rgn = define_projection(target_full_disk_size, satellite)
 
-    print("Loading China region in pixels:", region)
-    args = {"size": target_full_disk_size, "color": 'geocolor'}
-    img = load_geostationary(satellite, region=region,
-                             overlay_border=False,
-                             **args)
+    print("Loading China region in pixels:", rgn)
+    args = {"size": target_full_disk_size, "color": 'geocolor', "time_code": time_code}
+    img, utc_time = load_geostationary(satellite, region=rgn, overlay_border=False, **args)
     src_trans, src_crs, dst_trans, dst_crs, _ = define_projection(img.size[0], satellite)
     img = reprojection(img, src_trans, src_crs, dst_trans, dst_crs)
-    return img
+    return img, utc_time
 
 
 if __name__ == '__main__':
     # Example usage
     sat = 'gk2a'
-    image = load_china(sat)
+    image, _ = load_china(sat)
     image.save(f'china_{sat}.png')

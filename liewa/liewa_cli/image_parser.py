@@ -36,6 +36,7 @@ def parse_image(config_file_dir, time_code=None):
     bg_size = (image_settings["width"], image_settings["height"])
 
     bg = Image.new("RGB", bg_size, ImageColor.getrgb(bg_color))
+    utc_time = None
 
     for satellite, value in config["planets"].items():
         if satellite == "sentinel":
@@ -65,12 +66,12 @@ def parse_image(config_file_dir, time_code=None):
 
         # reprojected china
         elif satellite == "gk2a-china":
-            raw_img = load_china("gk2a")
+            raw_img, utc_time = load_china("gk2a", time_code=time_code)
             scale_ratio = value["size"] / max(raw_img.size)
             new_width, new_height = (int(dim * scale_ratio) for dim in raw_img.size)
             resized_img = raw_img.resize((new_width, new_height))
         elif satellite == "himawari-china":
-            raw_img = load_china("himawari")
+            raw_img, utc_time = load_china("himawari", time_code=time_code)
             scale_ratio = value["size"] / max(raw_img.size)
             new_width, new_height = (int(dim * scale_ratio) for dim in raw_img.size)
             resized_img = raw_img.resize((new_width, new_height))
@@ -80,7 +81,7 @@ def parse_image(config_file_dir, time_code=None):
             load_region = calc_load_region((value["size"], value["size"]), bg_size, (value["x"], value["y"]))
 
             args = {**value, "time_code": time_code}
-            raw_img = load_geostationary(satellite, region=load_region, **args)
+            raw_img, utc_time = load_geostationary(satellite, region=load_region, **args)
 
             scale_ratio = value["size"] / max(raw_img.size)
             new_width, new_height = (int(dim * scale_ratio) for dim in raw_img.size)
@@ -89,7 +90,7 @@ def parse_image(config_file_dir, time_code=None):
         pos = (int(value["x"] - (resized_img.width / 2)), int(value["y"] - (resized_img.height / 2)))
         bg.paste(resized_img, pos)
 
-    return bg
+    return bg, utc_time
 
 # im = parse_image("./recources")
 # im.show()
