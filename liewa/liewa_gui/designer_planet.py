@@ -188,7 +188,7 @@ class Ui_Dialog(object):
         _translate = QtCore.QCoreApplication.translate
         Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
         self.satellite_label.setText(_translate("Dialog", "Satellite:"))
-        self.satellite_selector.setItemText(0, _translate("Dialog", "goes-16"))
+        self.satellite_selector.setItemText(0, _translate("Dialog", "goes-19"))
         self.satellite_selector.setItemText(1, _translate("Dialog", "goes-18"))
         self.satellite_selector.setItemText(2, _translate("Dialog", "meteosat-9"))
         self.satellite_selector.setItemText(3, _translate("Dialog", "meteosat-0deg"))

@@ -41,7 +41,7 @@
       <widget class="QComboBox" name="satellite_selector">
        <item>
         <property name="text">
-         <string>goes-16</string>
+         <string>goes-19</string>
         </property>
        </item>
        <item>

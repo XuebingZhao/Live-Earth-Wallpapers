@@ -217,7 +217,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         for index in range(self.planet_list_model.rowCount()):  #iterate through every planet in the list
             item = self.planet_list_model.item(index)
             if item.text() not in ["sentinel","apod"]:
-                if item.text() in ["goes-16","goes-18","himawari","gk2a","meteosat-9","meteosat-0deg"]:
+                if item.text() in ["goes-19","goes-18","himawari","gk2a","meteosat-9","meteosat-0deg"]:
                     color = QtGui.QColor(QtCore.Qt.blue)
                 elif item.text() == "sdo":
                     color = QtGui.QColor(QtCore.Qt.yellow)
@@ -273,7 +273,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.planet_list_selection.select(self.planet_list_model.index(0,0), QtCore.QItemSelectionModel.Select)
         
     def add_planet(self):
-        planet_dialog = PlanetDialog("goes-16",{},self.parsed_config["settings"])
+        planet_dialog = PlanetDialog("goes-19",{},self.parsed_config["settings"])
         if planet_dialog.settings:
             self.parsed_config["planets"][planet_dialog.planet] = planet_dialog.settings
             item = QtGui.QStandardItem(planet_dialog.planet)

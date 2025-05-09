@@ -10,9 +10,10 @@ from PIL import Image
 from liewa.liewa_cli.utils import download
 
 sizes = {
-    "goes-16": 678,
+    # "goes-16": 678,
     # "goes-17": 678,
     "goes-18": 678,
+    "goes-19": 678,
     "himawari": 688,
     "gk2a": 688,
     "meteosat-9": 464,
