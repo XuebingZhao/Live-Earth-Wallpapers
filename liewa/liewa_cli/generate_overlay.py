@@ -6,7 +6,7 @@ import os
 from liewa.liewa_cli.utils import get_project_path
 
 long_0 = {
-    'goes-16': -75.0,
+    'goes-19': -75.0,
     'goes-18': -137.0,
     'himawari': 140.7,
     'gk2a': 128.2,
@@ -14,7 +14,7 @@ long_0 = {
     'meteosat-0deg': 0.0,
 }
 sizes = {
-    "goes-16": 678,
+    "goes-19": 678,
     "goes-18": 678,
     "himawari": 688,
     "gk2a": 688,
@@ -23,7 +23,7 @@ sizes = {
 }
 
 scale_factor = {
-    "goes-16": 1.0,
+    "goes-19": 1.0,
     "goes-18": 1.0,
     "himawari": 0.9874,
     "gk2a": 0.9856,
@@ -65,4 +65,6 @@ def generate_overlay(satellite, scale):
 if __name__ == '__main__':
     for satellite in long_0.keys():
         for scale in range(0, 5):
+            if satellite.lower().startswith("meteosat") and scale > 3:
+                continue
             generate_overlay(satellite, scale)

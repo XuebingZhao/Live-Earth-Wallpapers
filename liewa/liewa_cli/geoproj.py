@@ -12,7 +12,7 @@ from PIL import Image
 from liewa.liewa_cli.full_disks import load_geostationary
 
 long_0 = {
-    'goes-16': -75.0,
+    'goes-19': -75.0,
     'goes-18': -137.0,
     'himawari': 140.7,
     'gk2a': 128.2,
@@ -21,7 +21,7 @@ long_0 = {
 }
 
 scale_factor = {
-    "goes-16": 1.0,
+    "goes-19": 1.0,
     "goes-18": 1.0,
     "himawari": 0.9874,
     "gk2a": 0.9856,

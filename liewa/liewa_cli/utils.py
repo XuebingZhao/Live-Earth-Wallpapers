@@ -27,8 +27,25 @@ def save_image(img, filename, file):
     if file is None:
         img.save(os.path.join(filename))
     else:
-        img.save(os.path.join(filename,file))
+        img.save(os.path.join(filename, file))
 
 
 def get_current_time():
     return datetime.datetime.today().strftime('%Y%m%d_%H%M%S')
+
+
+def manage_backups(img):
+    backup_folder_path = os.path.join(get_project_path(), "recources", "backup")
+    if not os.path.exists(backup_folder_path):
+        os.makedirs(backup_folder_path)
+
+    backup_file_name = os.path.join(backup_folder_path, f"{get_current_time()}.jpg")
+    img.save(backup_file_name, 'JPEG', quality=95)
+
+    max_backups = 70 * 24 * 2  # 70 days of backups
+    # max_backups = 100  # 100 backups max
+    files = [f for f in os.listdir(backup_folder_path) if os.path.isfile(os.path.join(backup_folder_path, f))]
+    if len(files) > max_backups:
+        files.sort()
+        for file in files[0:-max_backups]:
+            os.remove(os.path.join(backup_folder_path, file))

@@ -24,7 +24,7 @@ def calc_load_region(satellite_size, canvas_size, satellite_center):
     region_bottom = min(satellite_size[1], int(canvas_origin_y + canvas_size[1]))
     region_right = max(region_left, region_right)
     region_bottom = max(region_top, region_bottom)
-    load_region = [region_left, region_top, region_right, region_bottom]
+    load_region = [region_top, region_left, region_bottom, region_right]
     return load_region
 
 
@@ -59,6 +59,11 @@ def parse_image(config_file_dir, time_code=None):
                 resized_img = ImageOps.fit(raw_img, im_size)
 
         # load static image of planet into the bg
+        elif satellite == "external_planet":
+            # raw_img = load_external(value)
+            pass
+
+        # reprojected china
         elif satellite == "gk2a-china":
             raw_img = load_china("gk2a")
             scale_ratio = value["size"] / max(raw_img.size)
@@ -75,16 +80,16 @@ def parse_image(config_file_dir, time_code=None):
             load_region = calc_load_region((value["size"], value["size"]), bg_size, (value["x"], value["y"]))
 
             args = {**value, "time_code": time_code}
-            raw_img = load_geostationary(satellite, load_region, **args)
+            raw_img = load_geostationary(satellite, region=load_region, **args)
+
             scale_ratio = value["size"] / max(raw_img.size)
             new_width, new_height = (int(dim * scale_ratio) for dim in raw_img.size)
-            resized_img = raw_img.resize((new_width, new_height))
+            resized_img = raw_img.resize((new_width, new_height))   # keep aspect ratio of the raw image
 
         pos = (int(value["x"] - (resized_img.width / 2)), int(value["y"] - (resized_img.height / 2)))
         bg.paste(resized_img, pos)
 
     return bg
-
 
 # im = parse_image("./recources")
 # im.show()

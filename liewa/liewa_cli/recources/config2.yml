@@ -4,7 +4,7 @@ settings:
   bg-color: "#000000"
 
 planets:
-  goes-16:
+  goes-19:
     x: 960
     y: 540
     size: 1040

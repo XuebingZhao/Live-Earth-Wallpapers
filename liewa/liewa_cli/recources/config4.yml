@@ -9,3 +9,4 @@ planets:
     y: 1500
     size: 3200
     color: geocolor
+    overlay_border: true

@@ -10,16 +10,16 @@ from PIL import Image
 
 from liewa.liewa_cli.utils import download, get_project_path
 
-
 sizes = {
-    "goes-16": 678,
-    "goes-17": 678,
+    # "goes-16": 678,
+    # "goes-17": 678,
     "goes-18": 678,
+    "goes-19": 678,
     "himawari": 688,
     "gk2a": 688,
     "meteosat-9": 464,
     "meteosat-0deg": 464,
-    # "meteosat-11":464,
+    # "meteosat-11": 464,
 }
 
 
@@ -33,11 +33,11 @@ def get_time_code(satellite, name):
     return latest, date
 
 
-def calc_tile_coordinates(zoom_level):
-    # zoomlevel 0-3 or 0-4 (depending on the satellite)
-    t_n = 2**zoom_level
-    row = range(0, t_n)
-    col = range(0, t_n)
+def calc_tile_coordinates(scale):
+    # Zoom level 0-3 or 0-4 (depending on the satellite)
+    tiles_n = 2 ** scale
+    row = range(0, tiles_n)
+    col = range(0, tiles_n)
     return list(row), list(col)
 
 
@@ -58,6 +58,7 @@ def build_url(satellite, scale, **kwargs):
         sys.exit("Does not support Zoom Levels greater than 4.")
 
     name = kwargs.get("color", "natural_color")
+
     supported_args = ["geocolor", "natural_color"]
     if name not in supported_args:
         raise ValueError(
@@ -70,11 +71,13 @@ def build_url(satellite, scale, **kwargs):
     else:
         time_code = str(time_code)
         date = f"{time_code[0:4]}/{time_code[4:6]}/{time_code[6:8]}"
-    base_url = f"https://ik.imagekit.io/stevenzc/tr:q-95,f-jpg/https://rammb-slider.cira.colostate.edu/data/imagery/{date}/{satellite}---full_disk/{name}/{time_code}/0{scale}"
+    base_url = f"https://rammb-slider.cira.colostate.edu/data/imagery/{date}/{satellite}---full_disk/{name}/{time_code}/0{scale}"
     return base_url
 
 
-def load_geostationary(satellite, region=None, overlay_border=True, **kwargs):
+def load_geostationary(satellite, region=None, overlay_border=False, **kwargs):
+    # load region_ can be [top, left, bottom, right] in pixels
+    # or a list [[row1,col1], [row2,col2]] in indexes
     scale = calc_scale(satellite, **kwargs)
     base_url = build_url(satellite, scale, **kwargs)
     row, col = calc_tile_coordinates(scale)
@@ -86,20 +89,17 @@ def load_geostationary(satellite, region=None, overlay_border=True, **kwargs):
     if region is None:
         region = [0, 0, fullsize, fullsize]
 
-    if len(region) == 4 and all(isinstance(x, (int, float)) for x in region):
-        load_region = [x * fullsize / tgt_size for x in region]
+    if len(region) == 4 and all(isinstance(item, (int, float)) for item in region):
+        # Scale the load region_ to the full size of the image
+        load_region = [item * fullsize / tgt_size for item in region]
 
-        row_col_pairs = []
+        top, left, bottom, right = [item / tilesize for item in load_region]
+        row_col_pairs = [[r, c]
+                         for r in row if top-1 < r < bottom
+                         for c in col if left-1 < c < right
+                         ]
 
-        for r in row:
-            if ((r+1) * tilesize <= load_region[1]) or (r * tilesize >= load_region[3]):
-                continue
-            for c in col:
-                if ((c+1) * tilesize <= load_region[0]) or (c * tilesize >= load_region[2]):
-                    continue
-                row_col_pairs.append([r, c])
-
-    elif all(isinstance(x, list) and all(isinstance(y, int) for y in x) and len(x) == 2 for x in region):
+    elif all(len(i) == 2 and isinstance(i, list) and all(isinstance(j, int) for j in i) for i in region):
         row_col_pairs = region
     else:
         raise ValueError("Invalid region parameter.")
@@ -121,13 +121,13 @@ def load_geostationary(satellite, region=None, overlay_border=True, **kwargs):
 
     with Pool(len(row_col_pairs)) as pool:
         pool.map(download_func, row_col_pairs)
-        print("Stiching images...")
 
+    print("Stiching images...")
     # stich the images together based on the position in the grid.
     bg = Image.new("RGB", (tilesize * (max(col) + 1), tilesize * (max(row) + 1)))
     for r, c in row_col_pairs:
         img = img_map[str(r) + ":" + str(c)]
-        bg.paste(img, (img.width * (c), (r) * img.height))
+        bg.paste(img, (img.width * c, img.height * r))
 
     end = time.time()
     print("Downloads took: ", end - start)
@@ -145,5 +145,5 @@ if __name__ == "__main__":
     for sat in sizes.keys():
         img_size = sizes[sat] * 2
         args = {"size": img_size, "color": "geocolor"}
-        image = load_geostationary(sat, overlay_border=False, **args)
-        image.save(f"{sat}.png")
+        image = load_geostationary(sat, overlay_border=True, **args)
+        image.save(f"{sat}-inspect.png")
